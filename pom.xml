@@ -261,13 +261,11 @@ under the License.
 							</filters>
 							<!-- If you want to use ./bin/flink run <quickstart jar> uncomment the following lines.
 							This will add a Main-Class entry to the manifest file -->
-							<!--
 							<transformers>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>com.example.flink.StreamingJob</mainClass>
+									<mainClass>com.example.flink.Java8WordCount</mainClass>
 								</transformer>
 							</transformers>
-						    -->
 							<createDependencyReducedPom>false</createDependencyReducedPom>
 						</configuration>
 					</execution>
@@ -279,8 +277,8 @@ under the License.
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.1</version>
 				<configuration>
-					<source>1.7</source> <!-- If you want to use Java 8, change this to "1.8" -->
-					<target>1.7</target> <!-- If you want to use Java 8, change this to "1.8" -->
+					<source>1.8</source>
+					<target>1.8</target>
 				</configuration>
 			</plugin>
 		</plugins>
