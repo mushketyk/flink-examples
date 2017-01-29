@@ -1,28 +1,30 @@
 package com.example.flink;
 
-public class TwitterFollower {
-    private int user;
-    private int follower;
+import org.apache.flink.api.java.tuple.Tuple2;
 
+public class TwitterFollower extends Tuple2<Integer, Integer> {
+
+    public TwitterFollower() {
+        super(null, null);
+    }
 
     public TwitterFollower(int user, int follower) {
-        this.user = user;
-        this.follower = follower;
+        super(user, follower);
     }
 
-    public int getUser() {
-        return user;
+    public Integer getUser() {
+        return f0;
     }
 
-    public int getFollower() {
-        return follower;
+    public Integer getFollower() {
+        return f1;
     }
 
     public void setUser(int user) {
-        this.user = user;
+        this.f0 = user;
     }
 
     public void setFollower(int follower) {
-        this.follower = follower;
+        this.f1 = follower;
     }
 }

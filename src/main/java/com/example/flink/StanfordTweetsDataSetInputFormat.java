@@ -20,20 +20,20 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * InputFormat for reading Stanford's tweet dataset of "follows" relationships.
+ * https://snap.stanford.edu/data/higgs-twitter.html
+ */
 public class StanfordTweetsDataSetInputFormat extends RichInputFormat<TwitterFollower, TweetFileInputSplit> {
 
     private static final Logger logger = LoggerFactory.getLogger(StanfordTweetsDataSetInputFormat.class);
-    private final String path;
+    private transient FileSystem fileSystem;
     private transient BufferedReader reader;
+    private final String inputPath;
     private String nextLine;
 
     public StanfordTweetsDataSetInputFormat(String path) {
-        try {
-            logger.info("Creating input format");
-            this.path = path;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create a file system", e);
-        }
+        this.inputPath = path;
     }
 
     @Override
@@ -43,13 +43,15 @@ public class StanfordTweetsDataSetInputFormat extends RichInputFormat<TwitterFol
 
     @Override
     public BaseStatistics getStatistics(BaseStatistics cachedStatistics) throws IOException {
-        return null;
+        FileSystem fileSystem = getFileSystem();
+        FileStatus[] statuses = fileSystem.listStatus(new Path(inputPath));
+        return new GraphStatistics(statuses.length);
     }
 
     @Override
     public TweetFileInputSplit[] createInputSplits(int minNumSplits) throws IOException {
-        FileSystem fileSystem = createFileSystem();
-        FileStatus[] statuses = fileSystem.listStatus(new Path(path));
+        FileSystem fileSystem = getFileSystem();
+        FileStatus[] statuses = fileSystem.listStatus(new Path(inputPath));
         logger.info("Found {} files", statuses.length);
 
         List<TweetFileInputSplit> splits = new ArrayList<>();
@@ -65,12 +67,15 @@ public class StanfordTweetsDataSetInputFormat extends RichInputFormat<TwitterFol
         return splits.toArray(new TweetFileInputSplit[splits.size()]);
     }
 
-    private FileSystem createFileSystem() throws IOException {
-        try {
-            return FileSystem.get(new URI(path));
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
+    private FileSystem getFileSystem() throws IOException {
+        if (fileSystem == null) {
+            try {
+                fileSystem = FileSystem.get(new URI(inputPath));
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
         }
+        return fileSystem;
     }
 
     @Override
@@ -80,11 +85,7 @@ public class StanfordTweetsDataSetInputFormat extends RichInputFormat<TwitterFol
 
     @Override
     public void open(TweetFileInputSplit split) throws IOException {
-        if (reader != null) {
-            reader.close();
-        }
-        //
-        FileSystem fileSystem = createFileSystem();
+        FileSystem fileSystem = getFileSystem();
         this.reader = new BufferedReader(new InputStreamReader(fileSystem.open(split.getPath())));
         // Pre-read next line to easily check if we've reached the end of an input split
         this.nextLine = reader.readLine();
@@ -112,6 +113,30 @@ public class StanfordTweetsDataSetInputFormat extends RichInputFormat<TwitterFol
     public void close() throws IOException {
         if (reader != null) {
             reader.close();
+        }
+    }
+
+    private class GraphStatistics implements BaseStatistics {
+
+        private long totalInputSize;
+
+        public GraphStatistics(long totalInputSize) {
+            this.totalInputSize = totalInputSize;
+        }
+
+        @Override
+        public long getTotalInputSize() {
+            return totalInputSize;
+        }
+
+        @Override
+        public long getNumberOfRecords() {
+            return BaseStatistics.NUM_RECORDS_UNKNOWN;
+        }
+
+        @Override
+        public float getAverageRecordWidth() {
+            return BaseStatistics.AVG_RECORD_BYTES_UNKNOWN;
         }
     }
 }
