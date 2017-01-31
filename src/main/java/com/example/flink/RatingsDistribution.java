@@ -5,6 +5,7 @@ import org.apache.flink.api.common.functions.GroupReduceFunction;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.operators.DataSource;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.types.IntValue;
 import org.apache.flink.util.Collector;
 
@@ -13,9 +14,15 @@ import org.apache.flink.util.Collector;
 public class RatingsDistribution {
 
     public static void main(String[] args) throws Exception {
+
+        // parse parameters
+        ParameterTool params = ParameterTool.fromArgs(args);
+        // path to ratings.csv file
+        String ratingsCsvPath = params.getRequired("input");
+
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
-        DataSource<String> file = env.readTextFile("ml-latest-small/ratings.csv");
+        DataSource<String> file = env.readTextFile(ratingsCsvPath);
         file.flatMap(new ExtractRating())
             .groupBy(0)
             // .reduceGroup(new SumRatingCount())
