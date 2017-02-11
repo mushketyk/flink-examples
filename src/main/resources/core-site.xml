@@ -1,0 +1,22 @@
+<configuration>
+    <property>
+        <name>fs.s3a.access.key</name>
+        <value>access-key</value>
+    </property>
+
+    <property>
+        <name>fs.s3a.secret.key</name>
+        <value>secret-key</value>
+    </property>
+    <property>
+        <name>fs.s3.impl</name>
+        <value>org.apache.hadoop.fs.s3a.S3AFileSystem</value>
+    </property>
+
+    <!-- Comma separated list of local directories used to buffer
+         large results prior to transmitting them to S3. -->
+    <property>
+        <name>fs.s3.buffer.dir</name>
+        <value>/tmp</value>
+    </property>
+</configuration>
