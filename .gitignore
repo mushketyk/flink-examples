@@ -17,3 +17,6 @@ hs_err_pid*
 
 # Maven files
 target
+
+# OSX files
+.DS_Store
