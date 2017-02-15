@@ -83,7 +83,7 @@ class ShortestPath<K, VV> implements GraphAlgorithm<K, VV, Double, DataSet<Verte
     }
 }
 
-class ShortestPathComputeFunction<K> extends ComputeFunction<K, Double, Double, NewDistance> {
+class ShortestPathComputeFunction<K> extends ComputeFunction<K, Double, Double, NewMinDistance> {
 
     private final K sourceVertex;
 
@@ -92,34 +92,44 @@ class ShortestPathComputeFunction<K> extends ComputeFunction<K, Double, Double, 
     }
 
     @Override
-    public void compute(Vertex<K, Double> vertex, MessageIterator<NewDistance> messageIterator) throws Exception {
+    public void compute(Vertex<K, Double> vertex, MessageIterator<NewMinDistance> messageIterator) throws Exception {
+        // Send initial group of messages from the source vertex
         if (vertex.getId().equals(sourceVertex) && getSuperstepNumber() == 1) {
             sendNewDistanceToAll(0);
         }
 
-        double minDistance = Double.MAX_VALUE;
-        for (NewDistance message : messageIterator) {
-            minDistance = Math.min(message.getDistance(), minDistance);
-        }
+        // Calculate new min distance from source node
+        double minDistance = minDistance(messageIterator);
 
+        // Send new min distance to neighbour vertices if new min distance is less
         if (minDistance < vertex.getValue()) {
             setNewVertexValue(minDistance);
-
             sendNewDistanceToAll(minDistance);
         }
     }
 
+    private double minDistance(MessageIterator<NewMinDistance> messageIterator) {
+        double minDistance = Double.MAX_VALUE;
+        for (NewMinDistance message : messageIterator) {
+            minDistance = Math.min(message.getDistance(), minDistance);
+        }
+        return minDistance;
+    }
+
     private void sendNewDistanceToAll(double newDistance) {
         for (Edge<K, Double> edge : getEdges()) {
-            sendMessageTo(edge.getTarget(), new NewDistance(edge.getValue() + newDistance));
+            sendMessageTo(edge.getTarget(), new NewMinDistance(edge.getValue() + newDistance));
         }
     }
 }
 
-class NewDistance {
+/**
+ * Message that contains new value of minimal distances for a particular path.
+ */
+class NewMinDistance {
     private final double distance;
 
-    public NewDistance(double distance) {
+    public NewMinDistance(double distance) {
         this.distance = distance;
     }
 
@@ -128,15 +138,19 @@ class NewDistance {
     }
 }
 
-class ShortestPathCombiner<K> extends MessageCombiner<K, NewDistance> {
+/**
+ * Combine multiple outgoing messages directed to the same vertex.
+ * @param <K>
+ */
+class ShortestPathCombiner<K> extends MessageCombiner<K, NewMinDistance> {
     @Override
-    public void combineMessages(MessageIterator<NewDistance> messageIterator) throws Exception {
+    public void combineMessages(MessageIterator<NewMinDistance> messageIterator) throws Exception {
         double minDistance = Double.MAX_VALUE;
-        for (NewDistance message : messageIterator) {
+        for (NewMinDistance message : messageIterator) {
             minDistance = Math.min(message.getDistance(), minDistance);
         }
 
-        sendCombinedMessage(new NewDistance(minDistance));
+        sendCombinedMessage(new NewMinDistance(minDistance));
     }
 }
 
