@@ -61,7 +61,8 @@ public class Top10Movies {
                         }
                     }
                 })
-                .sortPartition(1, Order.DESCENDING).setParallelism(1)
+                .sortPartition(1, Order.DESCENDING)
+                .setParallelism(1)
                 .mapPartition(new MapPartitionFunction<Tuple2<Integer, Double>, Tuple2<Integer, Double>>() {
                     @Override
                     public void mapPartition(Iterable<Tuple2<Integer, Double>> values, Collector<Tuple2<Integer, Double>> out) throws Exception {
