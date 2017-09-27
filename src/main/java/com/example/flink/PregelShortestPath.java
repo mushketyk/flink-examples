@@ -58,20 +58,20 @@ class ShortestPath<K, VV> implements GraphAlgorithm<K, VV, Double, DataSet<Verte
 
     @Override
     public DataSet<Vertex<K, Double>> run(Graph<K, VV, Double> graph) throws Exception {
-        Graph<K, Double, Double> resultGraph = graph.mapVertices(new VertexDoubleMapFunction<>(sourceVertex))
+        Graph<K, Double, Double> resultGraph = graph.mapVertices(new ShortestPathInit<>(sourceVertex))
         .runVertexCentricIteration(new ShortestPathComputeFunction(sourceVertex),
                                    new ShortestPathCombiner(),
                                    maxIterations);
         return resultGraph.getVertices();
     }
 
-    private static class VertexDoubleMapFunction<K, VV> implements MapFunction<Vertex<K,VV>, Double> {
+    private static class ShortestPathInit<K, VV> implements MapFunction<Vertex<K,VV>, Double> {
 
         private final K sourceVertex;
 
-        public VertexDoubleMapFunction(K sourceVertex) {
-            this.sourceVertex = sourceVertex;
-        }
+        public ShortestPathInit(K sourceVertex) {
+                                                      this.sourceVertex = sourceVertex;
+                                                                                       }
 
         @Override
         public Double map(Vertex<K, VV> vertex) throws Exception {
